@@ -69,7 +69,7 @@ inventory
 # count missing values, use `size`:
 
 inventory \
-  .groupby(lambda x:True) \
+  .groupby(lambda x: 0) \
   .agg( \
     num_total=('aisle','size'), \
     num_aisle_not_missing=('aisle','count') \
