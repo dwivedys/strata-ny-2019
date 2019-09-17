@@ -21,68 +21,41 @@ games = pd.read_table('data/games/games.csv', sep=',')
 games
 
 
-# ## Aggregation without grouping
-
-# Use the DataFrame method `agg` to reduce all rows of 
-# a table down to a single row by aggregating the
-# specified column by the specified function
-
-# As the argument to `agg`, pass a dictionary in the form  
-# `{'column_name': ['aggregate_function']}`
-games \
-  .agg({'list_price': ['mean']})
-
-# You can also specify multiple aggregate functions in 
-# the list
-games \
-  .agg({'min_age': ['count', 'nunique']})
-
-# However, these results are transposed: the DataFrame 
-# returned by the `agg` method has one _row_ for each
-# of the aggregates. (Compare this to aggregation with 
-# dplyr and SQL, which returns one _column_ for each
-# aggregate.) To resolve this, transpose the result 
-# using the `transpose` method
-games \
-  .agg({'min_age': ['count', 'nunique']}) \
-  .transpose()
-
-# The `agg` method does not give you control over the
-# column names in the aggregated result, but you can use
-# `rename` to rename them
-games \
-  .agg({'list_price': ['mean']}) \
-  .transpose() \
-  .rename(columns = {'mean': 'avg_list_price'})
-
-games \
-  .agg({'min_age': ['count', 'nunique']}) \
-  .transpose() \
-  .rename(
-    columns = {
-      'count': 'count_min_age',
-      'nunique': 'unique_count_min_age'
-    }
-  )
-  
-
 # ## Aggregation with grouping
 
-# Use the DataFrame method `groupby` immediately before
-# `agg` to aggregate by groups
+# To aggregate the data in a pandas DataFrame by
+# group, use the `groupby` method immediately 
+# followed by the `agg` method:
+
 games \
   .groupby('min_age') \
-  .agg({'list_price': ['mean']})
-  
-# When you use grouping, the result is not transposed.
+  .agg(avg_list_price=('list_price','mean'))
   
 # Load the flights dataset to demonstrate on larger data
 flights = pd.read_csv('data/flights/flights.csv')
 
-# You can specify muliple grouping columns in a list
+# You can specify muliple grouping columns in a list,
+# and you can return multiple aggregates:
 flights \
   .groupby(['origin', 'month']) \
-  .agg({'arr_delay': ['count', 'min', 'max', 'mean']})
+  .agg(
+    n=('flight','size'), \
+    min_arr_delay=('arr_delay','min'), \
+    max_arr_delay=('arr_delay','max'), \
+    avg_arr_delay=('arr_delay','mean') \
+  )
+
+
+# ## Aggregation without grouping
+
+# pandas expects a `groupby` before the `agg`. 
+# To aggregate over the whole DataFrame without 
+# any grouping, use a lambda in `groupby` to group 
+# by a dummy column with constant value 0:
+
+games \
+  .groupby(lambda x: 0) \
+  .agg(avg_list_price=('list_price','mean'))
 
 
 # ## Grouping and aggregating missing values
@@ -93,92 +66,64 @@ inventory = pd.read_table('data/inventory/data.txt')
 inventory
 
 # The function `count` does not count missing values. To 
-# count missing values, use `len`. Because `len` is a 
-# funcion defined in the Python language, not in the 
-# pandas package, do not enclose it in quotes:
+# count missing values, use `size`:
+
 inventory \
-  .agg({'aisle': [len, 'count']}) \
-  .transpose()
+  .groupby(lambda x:True) \
+  .agg( \
+    num_total=('aisle','size'), \
+    num_aisle_not_missing=('aisle','count') \
+  )
 
 inventory \
   .groupby('shop') \
-  .agg({'aisle': [len, 'count']}) 
+  .agg( \
+    num_total=('aisle','size'), \
+    num_aisle_not_missing=('aisle','count') \
+  )
 
 # Aggregate functions ignore missing values
 inventory \
   .groupby('shop') \
-  .agg({'price': ['mean']})
+  .agg(avg_price=('price','mean'))
 
-# With pandas, missing values in grouping columns are not
-# included in the results
+# With pandas, missing values in grouping columns
+# are not included in the results
 inventory \
   .groupby('aisle') \
-  .agg({'aisle': [len]}) 
+  .agg(num_rows=('aisle','size')) 
 
 
-# ## Method chaining after `groupby` and `agg`
+# ## Removing the MultiIndex
 
-# When you apply `groupby` and `agg`, the resulting 
-# DataFrame has what's called a _MultiIndex_ (a 
-# hierarchical index). You can see this by looking at
-# the header of the DataFrame returned by the above
-# examples; notice how there are three header rows
-# instead of the usual one.
+# When you use `groupby` and `agg`, the resulting
+# DataFrame has a _MultiIndex_ (a hierarchical
+# index). You can see this by looking at the header
+# of the DataFrame returned by the above examples;
+# notice how there are two header rows instead of
+# the usual one.
 
-# To continue chaining DataFrame methods after 
-# `groupby` and `agg`, you typically must flatten
-# this MultiIndex. Then the result will appear with
-# just one header row.
-
-# If you do not flatten the MultiIndex, some 
-# DataFrame methods later in the chain will fail. 
-# For example, this will fail because `sort_values`
-# does not expect a DataFrame with a MultiIndex:
-
-#```python
-#flights \
-#  .groupby(['origin', 'month']) \
-#  .agg({'arr_delay': ['count', 'max']}) \
-#  .sort_values('max')
-#```
-
-# To flatten the multiindex, use square brackets 
-# to flatten the first level (which has only one 
-# value in it, named according to the column whose 
-# values were aggregated) then use the `reset_index`
-# method to flatten the second level. Then you can
-# apply other methods like `sort_values` to the 
-# result:
+# This MultiIndex can cause some methods to behave
+# in unexpected ways. To remove it, use the
+# `reset_index` method:
 
 flights \
   .groupby(['origin', 'month']) \
-  .agg({'arr_delay': ['count', 'max']}) \
-  ['arr_delay'] \
-  .reset_index() \
-  .sort_values('max')
+  .agg(
+    n=('flight','size'), \
+    min_arr_delay=('arr_delay','min'), \
+    max_arr_delay=('arr_delay','max'), \
+    avg_arr_delay=('arr_delay','mean') \
+  ) \
+  .reset_index()
 
-# However, this method only works if the `agg` 
-# method aggregates the values from a single column.
-# If the `agg` method aggregates values from 
-# multiple columns, then it is necessary to redefine
-# the columns while removing the levels of the 
-# MultiIndex to give them unique, informative names.
-# You can define a function that does this, then 
-# use the DataFrame method `pipe` to apply this
-# function in the chain after `groupby` and `agg`.
-# Then you can apply other methods like 
-# `sort_values` to the result:
 
-def flatten_index(df):
-  df_copy = df.copy()
-  df_copy.columns = ['_'.join(col).rstrip('_') for col in df_copy.columns.values]
-  return df_copy.reset_index()
+# ## Aggregation with older versions of pandas
 
-flights \
-  .groupby(['origin', 'month']) \
-  .agg({
-    'dep_delay': ['count', 'max'], \
-    'arr_delay': ['count', 'max'] \
-  }) \
-  .pipe(flatten_index) \
-  .sort_values('arr_delay_max')
+# The aggregation syntax described above is 
+# supported in pandas version 0.25.0 (released
+# July 18, 2019) and higher. In earlier versions
+# of pandas, a different technique was required.
+# See the file `07_groupby_agg.py` from an
+# [earlier version of this training](https://github.com/ianmcook/strata-eu-2019/blob/master/1_data_manipulation/pandas/07_groupby_agg.py)
+# for details.

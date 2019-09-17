@@ -32,4 +32,3 @@ inventory \
   
 # Optional:
 # Add `.sort_values('shop')` to arrange by shop
-# Add `.reset_index(drop=True)` to reset the indices
