@@ -35,7 +35,7 @@ games = pd.read_csv('data/games/games.csv')
 
 # pandas provides other functions for reading other
 # formats of file-based data. See the 
-# [Input/Output section of the pandas API reference](https://pandas.pydata.org/pandas-docs/stable/api.html#input-output)
+# [Input/Output section of the pandas API reference](https://pandas.pydata.org/pandas-docs/stable/reference/io.html)
 # for details.
 
 # These functions return a `DataFrame` object
