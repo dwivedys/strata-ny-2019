@@ -108,6 +108,21 @@ games. \
   )
 
 
+# ## Changing column data types
+
+# To return a DataFrame with one or more columns
+# converted to different data types, use an the
+# `pandas.Series` method `astype`, specifying a data
+# type such as `'str'`, `'float'`, or `'int'`. Use
+# the data type `'category'` to convert a column to
+# the pandas categorical data type.
+games. \
+  assign(
+    name = lambda x: x.name.astype('category'),
+    year = lambda x: x.year.astype('str')
+  )
+
+
 # ## Renaming columns
   
 # To return a DataFrame with one or more columns renamed,
