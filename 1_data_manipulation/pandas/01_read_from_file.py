@@ -43,15 +43,3 @@ type(games)
 
 # View the data
 games
-
-# To display the pandas DataFrame in a scrollable
-# grid, set the pandas option
-# `display.html.table_schema` to `True`:
-
-pd.set_option("display.html.table_schema", True)
-
-# View the data in a scrollable grid
-games
-
-# Change to previous setting
-pd.set_option("display.html.table_schema", False)
