@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Bash script to create and populate tables for Strata NY 2018 training: Expand your data science and machine learning skills
+# Bash script to create and populate tables for Strata NY 2019 training: Expand your data science and machine learning skills
 
 # Change the values of these variables before running
 DEFAULT_DATABASE_NAME="default"
