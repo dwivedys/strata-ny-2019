@@ -65,6 +65,6 @@ more_columns = pd.DataFrame(
 more_columns
 
 # Use the pandas function `concat` with `axis=1` to
-# combine two DataFrames horizontally, adding the
-# columns of the second to the right of the first 
+# combine two or more DataFrames horizontally, adding
+# the columns of the second to the right of the first 
 pd.concat([games, more_columns], axis=1)
