@@ -20,7 +20,7 @@
 # test (evaluation) set.
 
 # Run the code in `50_tf_classify.py` or 
-# `51_tf_image_classify.py` before running the code below.
+# `60_tf_image_classify.py` before running the code below.
 
 
 # ## Generate predicted labels for the test set
