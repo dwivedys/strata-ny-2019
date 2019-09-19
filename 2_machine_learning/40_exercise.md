@@ -6,7 +6,8 @@ and height.
 ## scikit-learn
 
 1. Create a new empty Python code file and copy the
-   contents of `30_sklearn_regress.py` into it.
+   contents of `30_sklearn_regress.py` into it. Name
+   the new file `30_sklearn_classify.py`.
 
 2. In section **0. Preliminaries**, add the following
    additional imports:
@@ -15,25 +16,22 @@ and height.
    from sklearn.tree import DecisionTreeClassifier
    ```
 
-3. In section **2. Prepare data**, replace the code
-   that separates the features (x) and targets (y)
-   in the training and test datasets with the 
-   following:
+3. In section **2. Prepare data**, find the two
+   lines of code that separate the features and
+   targets, and replace them with these two lines:
    ```python
-   train_x = train.filter(['base_diameter','height'])
-   train_y = train.piece
-   test_x = test.filter(['base_diameter','height'])
-   test_y = test.piece
+   features = chess.filter(['base_diameter','height'])
+   targets = chess.filter(['piece'])
    ```
 
-4. Below that, but still in section **2. Prepare data**,
+4. Below that, but above the call to `train_test_split`,
    add the following code to use a `LabelEncoder` to
-   encode the character string labels as integers:
+   encode the character string target values as
+   integers:
    ```python
-   encoder = LabelEncoder()
-   encoder.fit(chess.piece)
-   train_y_encoded = encoder.transform(train_y)
-   test_y_encoded = encoder.transform(test_y)
+   label_encoder = LabelEncoder()
+   label_encoder.fit(targets.piece)
+   targets = label_encoder.transform(targets.piece)
    ```
 
 5. In section **3. Specify model**, replace the existing
@@ -42,18 +40,16 @@ and height.
    model = DecisionTreeClassifier()
    ```
 
-6. In section **4. Train model**, replace `train_y` with
-   `train_y_encoded`.
+6. In section **5. Evaluate model**, remove the code
+   that creates the scatterplot. In a classification
+   problem, the target is not a continuous numerical
+   value, so a scatter plot like this is not applicable.
 
-7. In section **5. Evaluate model**, replace `test_y` with
-   `test_y_encoded` and replace `train_y` with 
-   `train_y_encoded`.
-
-8. Remove section **6(a). Interpret the model**—this type 
+7. Remove section **6(a). Interpret the model**—this type 
    of classification model cannot be inspected in the
    same way a linear regression model can.
 
-9. In section **6(b). Make predictions**, replace the code
+8. In section **6(b). Make predictions**, replace the code
    that assigns the variable `d` with the following:
    ```python
    d = {
@@ -62,13 +58,13 @@ and height.
    }
    ```
 
-10. At the end of step **6(b). Make predictions**, use the
-    `inverse_transform` method of the `LabelEncoder` to
-    decode the integer predictions to character string
-    labels:
-    ```python
-    encoder.inverse_transform(predictions)
-    ```
+9. At the end of step **6(b). Make predictions**, use the
+   `inverse_transform` method of the `LabelEncoder` to
+   decode the integer predictions to character string
+   labels:
+   ```python
+   label_encoder.inverse_transform(predictions)
+   ```
 
 ## caret
 
