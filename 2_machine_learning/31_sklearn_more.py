@@ -51,18 +51,20 @@ chess
 
 # ### 2. Prepare data
 
-# Split the data into an 80% training set and a 20%
-# evaluation (test) set, using scikit-learn's 
+# Separate the features (x) and targets (y)
+features = chess.filter(['base_diameter'])
+targets = chess.filter(['weight'])
+
+# Split the features and targets each into an 80% 
+# training set and a 20% test set, using 
+# scikit-learn's 
 # [`train_test_split`](http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html)
 # function
-train, test = train_test_split(chess, test_size=0.2)
-
-# Separate the features (x) and targets (y) in the 
-# training and test datasets
-train_x = train.filter(['base_diameter'])
-train_y = train.weight
-test_x = test.filter(['base_diameter'])
-test_y = test.weight
+train_x, test_x, train_y, test_y = train_test_split(
+  features,
+  targets,
+  test_size=0.2
+)
 
 
 # ### 3. Specify model
