@@ -12,252 +12,136 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# # TensorFlow DNNClassifier for image classification
+# # TensorFlow neural network model for image classification
 
-# This example applies TensorFlow's
-# [`DNNClassifier`](https://www.tensorflow.org/api_docs/python/tf/estimator/DNNClassifier)
-# pre-made estimator to a simple image classification 
-# task.
+# This example uses TensorFlow's 
+# [Keras API](https://www.tensorflow.org/guide/keras)
+# to classify chess pieces based on images.
 
 
 # ## 0. Preliminaries
 
 # Import the required modules
-import os, random, math
+import sys
+import numpy as np
 import tensorflow as tf
-from IPython.display import Image, display
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.preprocessing.image import array_to_img
+from IPython.display import display
+
+# Import the functions defined in `load_images.py` 
+# in the directory `2_machine_learning`
+sys.path.append('2_machine_learning')
+from load_images import load_labeled_images, load_unlabeled_images
 
 
 # ## 1. Load data
 
-# Specify the unique labels (names of the chess pieces)
-chess_pieces = ['King', 'Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
-
 # Specify the root directory where the images are
 img_root = 'data/chess/images'
 
-# Make empty lists to hold image file paths (x) and 
-# labels (y)
-(x, y) = ([], [])
-
 # There are images of pieces from four different chess
-# sets (A, B, C, and D); specify which one use
-chess_set = 'A'
+# sets (A, B, C, and D); specify which one(s) to use
+chess_sets = ['A','B','C','D']
 
-# Fill the empty lists with the file paths and labels
-for chess_piece in chess_pieces:
-  img_dir = img_root + '/' + chess_set + '/' + chess_piece + '/'
-  img_paths = [img_dir + d for d in os.listdir(img_dir)]
-  img_labels = [chess_piece] * len(img_paths)
-  x.extend(img_paths)
-  y.extend(img_labels)
+(features, labels) = \
+  load_labeled_images(img_root, chess_sets)
 
-# View the image file paths and labels
-for path, label in zip(x, y):
-  print((path, label))
+# See one of the images and its label
+array_to_img(features[0])
+labels[0]
 
 
 # ## 2. Prepare data
 
-# Split the paths and labels into 80% training, 20% test
-train_frac = 0.8
-train_n = int(math.floor(train_frac * len(x)))
-indices = list(range(0, len(x)))
-random.shuffle(indices)
-train_indices = indices[0:train_n]
-test_indices = indices[train_n:]
-train_x = [x[i] for i in train_indices]
-train_y = [y[i] for i in train_indices]
-test_x = [x[i] for i in test_indices]
-test_y = [y[i] for i in test_indices]
+# Encode the character string labels as integer
+# numbers using scikit-learn's 
+# [`LabelEncoder`](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html)
+label_encoder = LabelEncoder()
+label_encoder.fit(labels)
+labels_encoded = label_encoder.transform(labels)
 
-# TensorFlow processes records in batches. Set the
-# batch size:
-BATCH_SIZE = 100
-
-# Define a function that reads an image from a file,
-# decodes it to numbers, and returns a two-element tuple 
-# `(features, labels)` where `features` is a dictionary
-# containing the image pixel data
-def _parse_function(path, label):
-    image = tf.image.decode_png(tf.read_file(path))
-    return ({'image':image}, label)
-
-# Define input functions to supply data for training
-# and evaulating the model
-
-# These functions apply `_parse_function`
-def train_input_fn():
-  dataset = tf.data.Dataset.from_tensor_slices((train_x, train_y))
-  dataset = dataset.map(_parse_function)
-  dataset = dataset.shuffle(len(train_x)).repeat().batch(BATCH_SIZE)
-  return dataset
-
-def test_input_fn():
-  dataset = tf.data.Dataset.from_tensor_slices((test_x, test_y))
-  dataset = dataset.map(_parse_function)
-  dataset = dataset.batch(BATCH_SIZE)
-  return dataset
+# Split the features and labels each
+# into training and test sets
+train_x, test_x, train_y, test_y = \
+  train_test_split(features,labels_encoded,test_size=0.2)
 
 
 # ## 3. Specify model
 
-# Create a list with the feature column
-my_feature_columns = [
-  tf.feature_column.numeric_column('image', shape=[128, 128])
-]
+# With the Keras API, you can specify a model as 
+# a stack of layers. This example specifies a 
+# convolutional neural network. In addition to dense
+# (fully connected) layers, this type of neural network
+# also uses:
+# - Convolutional layers (for filtering and weighting)
+# - Pooling layers (for downsampling) 
 
-# Instantiate a `DNNClassifier` estimator
+# These types of layers allow a neural network to 
+# differentiate between images based on subregions, 
+# and efficiently learn what visual features are most
+# important for predicting labels.
+model = tf.keras.Sequential([
+  tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=(128, 128, 1)),
+  tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+  tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+  tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+  tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), activation='relu'),
+  tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+  tf.keras.layers.Flatten(),
+  tf.keras.layers.Dense(units=512, activation='relu'),
+  tf.keras.layers.Dense(units=128, activation='relu'),
+  tf.keras.layers.Dense(units=6, activation='softmax')
+])
 
-# In this example, the [optimizer](https://www.tensorflow.org/api_guides/python/train#Optimizers) 
-# used to train the model is specified, because the default
-# Adagrad optimizer yielded a model with poor accuracy.
-# The optimizer's learning rate is also specified, because
-# the default value of 0.001 caused the algorithm to
-# converge to a local minimum.
-model = tf.estimator.DNNClassifier(
-    feature_columns=my_feature_columns,
-    hidden_units=[1024, 128],
-    optimizer=tf.train.AdamOptimizer(
-      learning_rate=0.0001
-    ),
-    label_vocabulary=chess_pieces,
-    n_classes=6
+# Before training a Keras model, you need to
+# configure it using the `compile` method,
+# specifying an optimizer, a loss function, and
+# one or more metrics
+model.compile(
+  optimizer='rmsprop',
+  loss='sparse_categorical_crossentropy',
+  metrics=['accuracy']
 )
 
 
 # ## 4. Train model
 
-# TensorFlow trains the model in multiple steps
-# (iterations). In each step, the model learns
-# from one batch of training data. You can specify
-# the number of training steps that TensorFlow should
-# perform before it stops the iterative training
-# process.
-TRAIN_STEPS = 300
-
-# Call the `train` method to train the model
-model.train(
-  input_fn=train_input_fn,
-  steps=TRAIN_STEPS
-)
+# Call the `fit` method to train the model
+model.fit(train_x, train_y, epochs=15)
 
 
 # ## 5. Evaluate model
 
-# Call the `evaluate` method to evaluate (test) the
-# trained model
-eval_result = model.evaluate(
-  input_fn=test_input_fn
-)
-
-# Print the result to examine the accuracy
-print(eval_result)
+# Call the `evaluate` method to evaluate (test)
+# the trained model
+model.evaluate(test_x, test_y)
 
 
 # ## 6. Make predictions
 
 # Use the trained model to generate predictions
-# on unlabeled images
+# on unlabeled images from different chess sets
 
-# Some of these images are of pieces from other
-# chess sets (not from set A)
-img_dir = img_root + '/unknown/'
-img_paths = [img_dir + d for d in os.listdir(img_dir)]
-pred_x = img_paths
+pred_features = \
+  load_unlabeled_images(img_root, ['unknown'])
 
-# Define a function that reads an image from a file
+# Call the `predict` method to return class 
+# probabilities
+pred_probs = model.predict(pred_features)
+pred_probs
 
-# This is similar to the `_parse_function` function
-# defined above, but without labels
-def _predict_parse_function(path):
-    image = tf.image.decode_png(tf.read_file(path))
-    return ({'image':image})
+# Call the `predict_classes` method to return
+# predicted classes, then use the `inverse_transform`
+# method of the `LabelEncoder` to decode these
+# to the names of chess pieces
+pred_classes = model.predict_classes(pred_features)
+pred_labels = label_encoder.inverse_transform(pred_classes)
 
-# Define an input function to supply data for generating
-# predictions
-def predict_input_fn():
-  dataset = tf.data.Dataset.from_tensor_slices(pred_x)
-  dataset = dataset.map(_predict_parse_function)
-  dataset = dataset.batch(BATCH_SIZE)
-  return dataset
-
-# Call the `predict` method to use the trained model to
-# make predictions
-predictions = model.predict(
-    input_fn=predict_input_fn
-)
-
-# Print the predictions and display the images
-template = ('\n\n\n\nPrediction is "{}" ({:.1f}%) from image:"')
-for (prediction, image) in zip(predictions, pred_x):
-    class_name = prediction['classes'][0].decode()
-    class_id = prediction['class_ids'][0]
-    probability = prediction['probabilities'][class_id]
-    print(
-      template.format(
-        class_name,
-        100 * probability
-      )
-    )
-    display(Image(image))
-
-
-# ## Exercises
-
-# 1. This code trains the model using only images of
-#    pieces from chess set A. The resulting trained 
-#    model is poor at generalizing to images of pieces
-#    from other chess sets. Modify the code in the
-#    **1. Load data** section to train the model using
-#    the images of pieces from all four sets (A, B, 
-#    C, and D). How does this affect the accuracy
-#    of the model on the test (evaluation) set?
-#
-# 2. In the sections *2. Prepare data*, 
-#    *3. Specify model*, and *4. Train model*, modify 
-#    `BATCH_SIZE`, `TRAIN_STEPS`, the number of
-#    hidden layers, and the number of nodes in the
-#    hidden layers to try to improve the accuracy of
-#    the model.
-#
-# 3. After making these changes, does the model do 
-#    a better job of generating predictions on the
-#    unlabeled images?
-#
-# 4. Modify the code in the **6. Make predictions**
-#    section to use images from the `weird` directory
-#    instead of the `unknown` directory. How well
-#    does the model predict on these images?
-
-
-# ## Next steps
-
-# Dense neural networks (with all layers fully connected)
-# are not well-suited to image classification tasks except
-# in relatively simple cases like this one. Predictions 
-# are sensitive to the size and position of the objects 
-# in the image; they cannot robustly generalize.
-
-# Accuracy can be improved by increasing the number of
-# hidden layers and nodes, increasing the number of
-# training steps, and using larger amounts of more
-# diverse training data, but this is inefficient.
-
-# Convolutional neural networks (CNNs) provide a solution.
-# In addition to dense (fully connected) layers, they use
-# - Convolutional layers (for filtering and weighting)
-# - Pooling layers (for downsampling)
-
-# These types of layers allow DNNs to differentiate between
-# images based on subregions, and efficiently learn what
-# visual features are most important for predicting labels.
-
-# TensorFlow does not provide pre-made estimators for CNNs
-# but you can use the Estimator API to build your own.
-# The next example demonstrates how to do this.
-
-# Alternatively, you could build a CNN for image 
-# classification using TensorFlow's 
-# [Keras API](https://www.tensorflow.org/guide/keras)
-# which offers a higher level of abstraction.
+# Display the images and predicted labels
+for (x, y) in zip(pred_features, pred_labels):
+  display(array_to_img(x))
+  print(y)

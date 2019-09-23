@@ -19,18 +19,19 @@
 # predictions to the true labels, using data from the
 # test (evaluation) set.
 
-# Run the code in `50_tf_classify.py` or 
-# `60_tf_image_classify.py` before running the code below.
+# Run the code in `60_tf_image_classify.py` 
+# before running the code below.
 
 
-# ## Generate predicted labels for the test set
+# ## Generate actual and predicted labels for the test set
 
-predictions = model.predict(
-    input_fn=test_input_fn
+test_pred = label_encoder.inverse_transform(
+  model.predict_classes(test_x)
 )
-test_pred = []
-for prediction in predictions:
-  test_pred.append(prediction['classes'][0].decode())
+
+test_actual = label_encoder.inverse_transform(
+  test_y
+)
 
 
 # ## Compute the confusion matrix
@@ -47,9 +48,9 @@ from sklearn import metrics
 
 # Compute the confusion matrix
 confusion = metrics.confusion_matrix(
-  y_true=test_y,
+  y_true=test_actual,
   y_pred=test_pred,
-  labels=chess_pieces
+  labels=['King', 'Queen', 'Rook', 'Bishop', 'Knight', 'Pawn']
 )
 
 
@@ -61,11 +62,8 @@ print(confusion)
 # - Rows represent the true labels
 # - Columns represent predicted labels.
 
-
-# ## Exercise
-
 # The scikit-learn website provides
 # [sample code](http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html)
-# to visualize a confusion matrix in a plot. Use the
-# function defined in that code to plot the confusion
-# matrix computed here.
+# to visualize a confusion matrix in a plot. You could
+# use the function defined in that code to plot the 
+# confusion matrix computed here.
