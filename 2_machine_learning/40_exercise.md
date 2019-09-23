@@ -1,13 +1,12 @@
 Complete the following exercise to use scikit-learn
-or caret to solve a classification problem, to predict
-the type of chess pieces based on their base diameter
-and height.
+or parsnip to solve a classification problem, to
+predict the type of chess pieces based on their base
+diameter and height.
 
 ## scikit-learn
 
-1. Create a new empty Python code file and copy the
-   contents of `30_sklearn_regress.py` into it. Name
-   the new file `30_sklearn_classify.py`.
+1. Copy the contents of `30_sklearn_regress.py` into
+   a new file named `30_sklearn_classify.py`.
 
 2. In section **0. Preliminaries**, add the following
    additional imports:
@@ -66,27 +65,29 @@ and height.
    label_encoder.inverse_transform(predictions)
    ```
 
-## caret
+## parsnip
 
-1. Create a new empty R code file and copy the
-   contents of `33_caret_regress.R` into it.
+1. Copy the contents of `33_parsnip_regress.R` into 
+   a new file named `33_parsnip_classify.R`.
 
 2. In section **2. Prepare data**, add the following code
    at the beginning of the section to change the `piece`
    column in the `chess` data frame to a _factor_.
    ```r
-   chess <- chess %>% mutate(piece = factor(piece))
+   chess <- chess %>% mutate(piece = as.factor(piece))
    ```
 
-3. In section **3 and 4. Specify and train model**, change
-   the model formula to the following:
-   ```r
-   piece ~ base_diameter + height
-   ```
+3. In section **3 and 4. Specify and train model**:
+   - Change `linear_reg()` to
+     `decision_tree(mode="classification")`
+   - Change `set_engine("lm")` to `set_engine("rpart")`
+   - Change the model formula to:
+     `piece ~ base_diameter + height`
+     
+4. In section **5. Evaluate model**:
+   - Replace `weight` with `piece` in two places
+   - Replace `.pred` with `.pred_class` in one place
 
-4. In section **5. Evaluate model**, replace the code that
-   computes R-squared with this code that displays a
-   confusion matrix and other accuracy metrics:
-   ```r
-   confusionMatrix(test_pred, chess_test$piece)
-   ```
+5. Remove section **6(a). Interpret the model**—this type 
+   of classification model cannot be inspected in the
+   same way a linear regression model can.

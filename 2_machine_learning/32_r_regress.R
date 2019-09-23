@@ -94,3 +94,11 @@ model2 <- rpart(
 # different R packages into a more uniform interface, 
 # and to standardize common tasks such as training 
 # and evaluating models.
+
+# However, the caret package has some shortcomings,
+# so it is currently being redesigned as a new package
+# called [parsnip](https://tidymodels.github.io/parsnip/).
+# The parsnip package is a part of the
+# [tidymodels](https://github.com/tidymodels) collection
+# of packages, which is being developed to standardize
+# all the important steps of the modeling process in R.
