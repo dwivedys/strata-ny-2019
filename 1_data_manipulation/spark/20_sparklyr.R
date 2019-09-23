@@ -21,12 +21,15 @@ library(dplyr)
 # Start a Spark session
 spark <- spark_connect(master = "local")
 
-# Load the data
+# Load the data into Spark
 flights <- tbl(spark, "flights")
+
+# Display a subset of rows from the Spark DataFrame
+flights
 
 # Use dplyr verbs to perform operations on the Spark
 # DataFrame and return a pointer to the result DataFrame
-flights %>%
+result <- flights %>%
   filter(dest == "LAS") %>%
   group_by(origin) %>%
   summarise(
@@ -35,12 +38,15 @@ flights %>%
   ) %>%
   arrange(avg_dep_delay)
 
-# In this case, the _full_ result DataFrame is printed to the
-# screen because it's so small
+# Display the result
+result
 
-# You can also assign the result to a variable (a new Spark 
-# DataFrame) or return it as an R data frame by calling the
-# `collect()` function
+# In this case, the _full_ result Spark DataFrame is
+# printed to the screen because it's so small
+
+# You can also return the result as an R data frame by 
+# calling the `collect()` function
+result %>% collect()
 
 # End the Spark session
 spark_disconnect(spark)

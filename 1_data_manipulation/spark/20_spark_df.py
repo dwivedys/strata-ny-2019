@@ -21,7 +21,7 @@ from pyspark.sql.functions import col, lit, count, mean
 # Start a Spark session
 spark = SparkSession.builder.master('local').getOrCreate()
 
-# Load the data
+# Load the data into Spark
 flights = spark.table('flights')
 
 # Display a subset of rows from the Spark DataFrame
@@ -29,22 +29,24 @@ flights.show()
 
 # Use Spark DataFrame methods to perform operations on the
 # DataFrame and return a pointer to the result DataFrame
-flights \
+result = flights \
   .filter(col('dest') == lit('LAS')) \
   .groupBy('origin') \
   .agg( \
        count('*').alias('num_departures'), \
        mean('dep_delay').alias('avg_dep_delay') \
   ) \
-  .orderBy('avg_dep_delay') \
-  .show()
+  .orderBy('avg_dep_delay')
 
-# In this case, the _full_ result DataFrame is printed to the
-# screen because it's so small
+# Display the result
+result.show()
 
-# You can also assign the result to a variable (a new Spark 
-# DataFrame) or return it as a pandas DataFrame by calling the
-# `toPandas` method
+# In this case, the _full_ result Spark DataFrame is
+# printed to the screen because it's so small
+
+# You can also assign the result as a pandas DataFrame 
+# by calling the `toPandas` method
+result.toPandas()
 
 # End the Spark session
 spark.stop()
