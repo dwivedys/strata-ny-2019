@@ -14,7 +14,7 @@
 
 # # Decision tree classifier with scikit-learn
 
-# This example demonstrates a decision tree classification
+# This example demonstrates a simple classification
 # task using the using the
 # [`DecisionTreeClassifier`](https://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html)
 # class in the 
